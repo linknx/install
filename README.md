@@ -8,13 +8,12 @@ Installation de KnxD / LinKnx / KnxWeb
 
 Install de :
  - pthsem  : 2.0.8
- - KnxD    : 0.10
+ - KnxD    : "git current version"
  - LinKnx  : 0.0.1.32  ( + mysql pour les logs )
  - KnxWeb  : 2.1.0 ( + serveur web apache2 )
  - créer un "user" : "knx"  mot de passe "knx"
  - possibilité d'installer :
-  - Webmin : 1.780
-  - WebIOPi : 0.7.1
+  - Webmin : Dernière version stable
   - YANA4ALL ( TODO ... )
 
 $ unzip install-master.zip

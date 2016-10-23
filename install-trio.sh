@@ -6,7 +6,7 @@
 # Script libre: GPLv3
 #
 # pour rendre le script executable :
-#     chmod u+x install-trio.sh
+#     sudo chmod u+x install-trio.sh
 # Syntaxe: # sudo ./install-trio.sh
 # sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion
 # sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion --linknx-cvsversion
@@ -18,7 +18,7 @@
 # sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
 # sudo sh ./install-trio.sh --with-mysql --with-webmin
 #
-version="0.15"; #au 12/06/2016
+version="0.16"; #au 23/10/2016
 SCRIPT_PATH=$PWD
 raspberry=:
 #knxd_ipport="192.168.1.2"
@@ -205,7 +205,7 @@ Usage: $0 [OPTION]...
   -V, --version   info sur la version du script et des composants installe
 
   -raspberry, --raspberry,
-                  Install Sur Raspberry Pi (raspcontrol + WebIOPi)
+                  Install Sur Raspberry Pi (WebIOPi)
   --with-webmin   Install Webmin par defaut ne le fait pas
 
 Parametres pour creation du user qui va lancer knxd/linknx + Mysql:
@@ -234,11 +234,12 @@ Exemple :
 sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx
  --knxweb-cvsversion --linknx-cvsversion --with-webmin
 
+sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --with-webmin
+
 DOCUMENTATIONXX
   exit
 fi
 
-#  - raspcontrol : Specifique au Rasbperry Pi  # enlever car plus dispo ou changer d'url ...
 if test "$version_message" = true; then
   cat << VERSIONXX
 Script d'install de knxd / LinKnx / KnxWeb pour linux Debian
@@ -330,7 +331,7 @@ fi
 if test "x$user_login" != x; then
   echo "Creation de l'utilisateur '$user_login' "
 #  # /usr/sbin/useradd $user_login -p `perl -e "print crypt('$password',pwet)"` -g vhosts -d /home/$user_login -m -s /bin/bash
-  sudo /usr/sbin/useradd ${user_login} -p $(perl -e'print crypt("$password", "linknx")') -G $groups,daemon,root,www-data -d /home/${user_login} -m -s /bin/bash
+  /usr/sbin/useradd ${user_login} -p $(perl -e'print crypt("$password", "linknx")') -G $groups,daemon,root,www-data -d /home/${user_login} -m -s /bin/bash
 #
   if [ $? -ne 0 ];
   then
@@ -468,7 +469,8 @@ update_paquets ()
   echo "-------------------------------------------------------------------";
   echo "Updates et Upgrades paquets            ";
   echo "-------------------------------------------------------------------";
-  sudo apt-get update --yes -y -qq
+  #apt-get update --yes -y -qq
+  apt-get update --yes -y -qq && apt-get upgrade --yes -y -qq
 }
 
 install_dependances ()
@@ -476,10 +478,9 @@ install_dependances ()
   echo "-------------------------------------------------------------------"
   echo "Installation des dependances                    "
   echo "-------------------------------------------------------------------"
-  #sudo apt-get install gcc g++ make locales --yes -y -qq
+  #apt-get install gcc g++ make locales --yes -y -qq
 
-  sudo apt-get update --yes -y -qq
-  sudo apt-get upgrade --yes -y -qq
+  apt-get update --yes -y -qq && apt-get upgrade --yes -y -qq
 
 
   PAQUAGES=${PAQUAGES}" gcc g++ make"
@@ -487,7 +488,7 @@ install_dependances ()
   echo "Liste des paquets installés 1/6 : "
   echo ${PAQUAGES}
   echo "-------------------------------------------------------------------"
-  sudo apt-get install ${PAQUAGES} --yes -y -qq
+  apt-get install ${PAQUAGES} --yes -y -qq
   PAQUAGES=" ";
 
   PAQUAGES=${PAQUAGES}" liblog4cpp5-dev libesmtp-dev liblua5.1-0-dev libxml2 dpkg"
@@ -495,7 +496,7 @@ install_dependances ()
   echo "Liste des paquets installés 2/6 : "
   echo ${PAQUAGES}
   echo "-------------------------------------------------------------------"
-  sudo apt-get install ${PAQUAGES} --yes -y -qq
+  apt-get install ${PAQUAGES} --yes -y -qq
   PAQUAGES=" ";
   if test $_mysql_with = yes; then
     PAQUAGES=${PAQUAGES}" mysql-client mysql-common mysql-server mysql-server-core-5.5 libmysqlclient-dev"
@@ -503,7 +504,7 @@ install_dependances ()
     echo "Liste des paquets installés 3/6 : "
     echo ${PAQUAGES}
     echo "-------------------------------------------------------------------"
-    sudo apt-get install ${PAQUAGES} --yes -y -qq
+    apt-get install ${PAQUAGES} --yes -y -qq
     PAQUAGES=" ";
     echo "Quel mot de passe venez vous de taper (mot de passe root de la MySql) ?"
     while true
@@ -534,7 +535,7 @@ install_dependances ()
   echo "Liste des paquets installés 4/6 : "
   echo ${PAQUAGES}
   echo "-------------------------------------------------------------------"
-  sudo apt-get install ${PAQUAGES} --yes -y -qq
+  apt-get install ${PAQUAGES} --yes -y -qq
   PAQUAGES=" ";
 
   echo "-------------------------------------------------------------------"
@@ -550,10 +551,10 @@ install_dependances ()
     echo "Liste des paquets installés 5/6 : "
     echo ${PAQUAGES}
     echo "-------------------------------------------------------------------"
-    sudo apt-get install ${PAQUAGES} --yes -y -qq
+    apt-get install ${PAQUAGES} --yes -y -qq
     PAQUAGES=" ";
-    sudo chmod 777 -R /var/www
-    sudo chown www-data:www-data -R /var/www
+    chmod 777 -R /var/www
+    chown www-data:www-data -R /var/www
   else
     echo " Apache2 deja installé "
     PHP_PATH=`which php`
@@ -570,13 +571,13 @@ install_dependances ()
     echo "Liste des paquets installés 6/6 : "
     echo ${PAQUAGES}
     echo "-------------------------------------------------------------------"
-    sudo apt-get install ${PAQUAGES} --yes -y -qq
+    apt-get install ${PAQUAGES} --yes -y -qq
     PAQUAGES=" ";
   fi
   echo "-------------------------------------------------------------------"
   echo " Fin de l'install des paquets nécessaires : "
   echo "-------------------------------------------------------------------"
-  sudo apt-get install -f -y -qq --yes
+  apt-get install -f -y -qq --yes
   PAQUAGES=" ";
 }
 
@@ -587,9 +588,9 @@ raspberry ()
 
 #  echo "-------------------------------------------------------------------"
 #  echo "Installation de yana-server YANA (You Are Not Alone) http://idleman.fr/yana/ "
-#  sudo wget https://raw.githubusercontent.com/ldleman/yana-server/master/install.sh
-#  sudo chmod +x install.sh
-#  sudo ./install.sh
+#  wget https://raw.githubusercontent.com/ldleman/yana-server/master/install.sh
+#  chmod +x install.sh
+#  ./install.sh
 #  echo "  Acces via http://$IP_machine/yana-server/ "
 #  echo "-------------------------------------------------------------------"
 
@@ -601,11 +602,11 @@ raspberry ()
   wget http://downloads.sourceforge.net/project/webiopi/WebIOPi-0.7.1.tar.gz
   tar xvzf WebIOPi-0.7.1.tar.gz
   cd WebIOPi-0.7.1
-  sudo ./setup.sh
+  ./setup.sh
 
-  sudo /etc/init.d/webiopi stop
-  sudo update-rc.d webiopi defaults
-  sudo /etc/init.d/webiopi start
+  /etc/init.d/webiopi stop
+  update-rc.d webiopi defaults
+  /etc/init.d/webiopi start
   echo "  Acces via http://$IP_machine:8000/ ou http://raspberrypi:8000/ "
   echo "    user='webiopi' pass='raspberry' "
   echo " => http://webiopi.trouch.com/ "
@@ -619,37 +620,41 @@ KNXD_PATH=`which knxd`
 if test x$KNXD_PATH = x; then :
   echo "Installation de knxd 0.10                    "
 
-  sudo apt-get install cdbs --yes -y -qq
+  apt-get install cdbs --yes -y -qq
 
   wget https://www.auto.tuwien.ac.at/~mkoegler/pth/pthsem_2.0.8.tar.gz
   tar xzf pthsem_2.0.8.tar.gz
   cd pthsem-2.0.8
-  sudo dpkg-buildpackage -b -uc
+  dpkg-buildpackage -b -uc
   cd ..
-  sudo dpkg -i libpthsem*.deb
+  dpkg -i libpthsem*.deb
 
   echo "Installation de pthsem terminée "
 
   #echo " executer sudo VISUDO et ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
-  #sudo wget -O knxd.zip https://github.com/knxd/knxd/archive/master.zip
+  #wget -O knxd.zip https://github.com/knxd/knxd/archive/master.zip
 
-  sudo apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-daemon-dev dh-systemd --yes -y -qq
+  apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-daemon-dev dh-systemd --yes -y -qq
   git clone https://github.com/knxd/knxd.git
 
-  sudo mv knxd-master knxd
+  mv knxd-master knxd
   cd knxd
 
-  sudo dpkg-buildpackage -b -uc
+  dpkg-buildpackage -b -uc
   cd ..
-  sudo dpkg -i knxd_*.deb knxd-tools_*.deb
+  dpkg -i knxd_*.deb knxd-tools_*.deb
 
   echo " " > /var/log/knxd.log
-  sudo chmod 777 /var/log/knxd.log
+  chmod 777 /var/log/knxd.log
 
-# sudo nano /etc/knxd.conf
+# nano /etc/knxd.conf
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:192.168.188.XX"
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:$knxd_ipport"
-# sudo nano /etc/default/knxd
+#
+# KNXD_OPTS="-e 1.1.255 -c -D -T -R -S -b ipt:192.168.1.10"
+# KNXD_OPTS=" -c -D -T -R -S -b ipt:192.168.1.10"
+#
+# nano /etc/default/knxd
 # START_KNXD=YES
 
   # KNXD_OPTS="-u /tmp/eib -b ip:"
@@ -669,9 +674,14 @@ if test x$KNXD_PATH = x; then :
   rm $EIBNETTMP
   if [ "$EIBD_NET_MCAST" != "" -a "$EIBD_NET_HOST" != "$EIBD_MY_IP" ]; then
     echo "Found KNXnet/IP Router $EIBD_NET_NAME on $EIBD_NET_HOST with $EIBD_NET_MCAST"
-    #sudo echo "KNXD_OPTS=\"--daemon=/var/log/knxd.log -D -T -R -S ip:$EIBD_NET_HOST\"" >> /etc/knxd.conf
-    sudo echo "KNXD_OPTS=\"-u /tmp/eib -b ip:$EIBD_NET_HOST\"" >> /etc/knxd.conf
+    #echo "KNXD_OPTS=\"-D -T -R -S ipt:$EIBD_NET_HOST\"" >> /etc/knxd.conf
+    #echo "KNXD_OPTS=\"-u /tmp/eib -b ip:$EIBD_NET_HOST\"" >> /etc/knxd.conf
+    echo "KNXD_OPTS=\"-c -D -T -R -S -b ipt:$EIBD_NET_HOST\"" >> /etc/knxd.conf
+  else
+    echo "KNXD_OPTS=\"-c -D -T -R -S -b ipt:$knxd_ipport\"" >> /etc/knxd.conf
   fi
+
+  #echo "export PATH=\"$PATH:/usr/lib/knxd\"" >> /etc/knxd.conf
 
 else
   KNXD_VERSION=`$KNXD_PATH -V`
@@ -688,87 +698,106 @@ then
   if test $linknx_CVS = true;
   then
     echo "Installation de linknx version presente sur le CVS sourceforge "
-    sudo wget -O linknx.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/?view=tar
-    sudo tar xf linknx.tar
+    wget -O linknx.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/?view=tar
+    tar xf linknx.tar
     cd linknx
     # generate configure script (credit : othmar)
-    sudo touch aclocal.m4 Makefile.in config.h.in configure
+    touch aclocal.m4 Makefile.in config.h.in configure
+
+    # TODO : https://github.com/linknx/linknx/archive/v0.0.1.33.zip
+    # https://github.com/jef2000/linknx/archive/master.zip
+    #wget https://github.com/linknx/linknx/archive/v0.0.1.33.zip
+    #unzip v0.0.1.33.zip
+    #cd linknx-0.0.1.33/
+
   else
     echo "Installation de linknx_0.0.1.32                   "
-    sudo wget http://downloads.sourceforge.net/project/linknx/linknx/linknx-0.0.1.32/linknx-0.0.1.32.tar.g
-    sudo tar xzf linknx-0.0.1.32.tar.gz
+    wget http://downloads.sourceforge.net/project/linknx/linknx/linknx-0.0.1.32/linknx-0.0.1.32.tar.gz
+    tar xzf linknx-0.0.1.32.tar.gz
     cd linknx-0.0.1.32
   fi
   if test $_mysql_with = yes;
   then
-    sudo ./configure --without-pth-test --enable-smtp --with-log4cpp --with-lua --with-mysql=/usr/bin/mysql_config
+    ./configure --without-pth-test --enable-smtp --with-log4cpp --with-lua --with-mysql=/usr/bin/mysql_config
   else
-    sudo ./configure --without-pth-test --enable-smtp --with-log4cpp --with-lua --without-mysql
+    ./configure --without-pth-test --enable-smtp --with-log4cpp --with-lua --without-mysql
   fi
   #TODO essayer de gérer les erreurs de configure make ou autre pour alerter ...
-  sudo make
-  sudo make install
+  make
+  make install
   cd ..
 
+  if [ ! -f $SCRIPT_PATH/linknx.xml ]
+  then
+    wget -O $SCRIPT_PATH/linknx.xml http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/conf/linknx.xml
+  fi
+  if [ -d "/var/www/html/" ]; then
+    linknx_xml="/var/www/html/knxweb2";
+    if [ ! -d "/var/www/html/knxweb2" ]; then
+      mkdir "/var/www/html/knxweb2";
+    fi
+  fi
+  if [ ! -d "$linknx_xml" ]
+  then
+    mkdir -p $linknx_xml
+  fi
+  if [ ! -f $SCRIPT_PATH/linknx.xml ]
+  then
+    wget -O $SCRIPT_PATH/linknx.xml http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/conf/linknx.xml
+  fi
+  cp $SCRIPT_PATH/linknx.xml $linknx_xml/linknx.xml
+  chmod 777 $linknx_xml/linknx.xml
+
   if test $service_Systemd = true; then
-    sudo echo "[Unit]" > /etc/systemd/system/linknx.service
-    sudo echo "Description=Linknx Server" >> /etc/systemd/system/linknx.service
-    #sudo echo "Requires=eibd.service" >> /etc/systemd/system/linknx.service
-    sudo echo "Requires=knxd.service" >> /etc/systemd/system/linknx.service
-    #sudo echo "After=eibd.service" >> /etc/systemd/system/linknx.service
-    sudo echo "After=knxd.service" >> /etc/systemd/system/linknx.service
-    sudo echo "[Service]" >> /etc/systemd/system/linknx.service
-    sudo echo "ExecStart=/usr/local/bin/linknx --daemon=/var/log/linknx.log --config=$linknx_xml/linknx.xml --pid-file=/var/run/linknx.pid -w" >> /etc/systemd/system/linknx.service
-    sudo echo "PIDFile=/var/run/linknx.pid" >> /etc/systemd/system/linknx.service
-    sudo echo "Type=forking" >> /etc/systemd/system/linknx.service
-    sudo echo "Restart=always" >> /etc/systemd/system/linknx.service
-    #sudo echo "User=linknx" >> /etc/systemd/system/linknx.service
-    sudo echo "[Install]" >> /etc/systemd/system/linknx.service
-    sudo echo "WantedBy=multi-user.target" >> /etc/systemd/system/linknx.service
+    # /lib/systemd/system/knxd.service
+    echo "[Unit]" > /etc/systemd/system/linknx.service
+    echo "Description=Linknx Server" >> /etc/systemd/system/linknx.service
+    #echo "Requires=knxd.service" >> /etc/systemd/system/linknx.service
+    echo "After=knxd.service" >> /etc/systemd/system/linknx.service
+    echo "[Service]" >> /etc/systemd/system/linknx.service
+    echo "ExecStart=/usr/local/bin/linknx --daemon=/var/log/linknx.log --config=$linknx_xml/linknx.xml --pid-file=/var/run/linknx.pid -w" >> /etc/systemd/system/linknx.service
+    echo "PIDFile=/var/run/linknx.pid" >> /etc/systemd/system/linknx.service
+    echo "Type=forking" >> /etc/systemd/system/linknx.service
+    echo "Restart=always" >> /etc/systemd/system/linknx.service
+    #Restart=on-failure
+    #RestartSec=10
+    #echo "User=linknx" >> /etc/systemd/system/linknx.service
+    echo "[Install]" >> /etc/systemd/system/linknx.service
+    echo "WantedBy=multi-user.target" >> /etc/systemd/system/linknx.service
 
     chmod a+x /etc/systemd/system/linknx.service
+    echo " " > /var/log/linknx.log
+    chmod 777 /var/log/linknx.log
+
     systemctl --system daemon-reload
     systemctl enable linknx.service
-    systemctl status linknx.service
+    systemctl daemon-reload
+    systemctl start linknx.service
 
   else
     if [ ! -f $SCRIPT_PATH/linknx.sh ]
     then
-      sudo wget -O $SCRIPT_PATH/linknx.sh http://www.knxweb.fr/install_trio/linknx.sh
+      wget -O $SCRIPT_PATH/linknx.sh http://www.knxweb.fr/install_trio/linknx.sh
     fi
 
-    sudo cp $SCRIPT_PATH/linknx.sh /etc/init.d/linknx
+    cp $SCRIPT_PATH/linknx.sh /etc/init.d/linknx
+    sed -i 's%# Required-Start:    $local_fs $remote_fs $syslog eibd"%# Required-Start:    $local_fs $remote_fs $syslog knxd%g' /etc/init.d/linknx
+    sed -i 's%# Required-Start:    $local_fs $remote_fs $syslog eibd mysql"%# Required-Start:    $local_fs $remote_fs $syslog knxd mysql%g' /etc/init.d/linknx
     if [ ! -f /etc/init.d/mysql ] ; then
-      sudo sed -i 's%# Required-Start:    $local_fs $remote_fs $syslog knxd mysql"%# Required-Start:    $local_fs $remote_fs $syslog knxd%g' /etc/init.d/linknx
+      sed -i 's%# Required-Start:    $local_fs $remote_fs $syslog knxd mysql"%# Required-Start:    $local_fs $remote_fs $syslog knxd%g' /etc/init.d/linknx
     fi
-    sudo chmod 755 /etc/init.d/linknx
-    sudo chmod +x /etc/init.d/linknx
-    if [ ! -d "$linknx_xml" ]
-    then
-      sudo mkdir -p $linknx_xml
-    fi
-    if [ ! -f $SCRIPT_PATH/linknx.xml ]
-    then
-      sudo wget -O $SCRIPT_PATH/linknx.xml http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/conf/linknx.xml
-    fi
+    chmod 755 /etc/init.d/linknx
+    chmod +x /etc/init.d/linknx
 
-    if [ -d "/var/www/html/" ]; then
-      linknx_xml="/var/www/html/knxweb2";
-      if [ ! -d "/var/www/html/knxweb2" ]; then
-        mkdir "/var/www/html/knxweb2";
-      fi
-    fi
-    sudo cp $SCRIPT_PATH/linknx.xml $linknx_xml/linknx.xml
-    sudo chmod 777 $linknx_xml/linknx.xml
     # Fichier Parametrage demarrage automatique Linknx
     # PATH_LINKNX_XML=/var/lib/linknx
-    sudo echo "# Configuration demarrage /etc/init.d/linknx " > /etc/default/linknx
-    sudo echo "PATH_LINKNX_XML=$linknx_xml" >> /etc/default/linknx
-    sudo echo "DAEMON_ARGS=\"--config=$linknx_xml/linknx.xml -p/var/run/linknx.pid -d/var/log/linknx.log -w\""  >> /etc/default/linknx
+    echo "# Configuration demarrage /etc/init.d/linknx " > /etc/default/linknx
+    echo "PATH_LINKNX_XML=$linknx_xml" >> /etc/default/linknx
+    echo "DAEMON_ARGS=\"--config=$linknx_xml/linknx.xml -p/var/run/linknx.pid -d/var/log/linknx.log -w\""  >> /etc/default/linknx
 
-    sudo update-rc.d linknx defaults
+    update-rc.d linknx defaults
     echo " " > /var/log/linknx.log
-    sudo chmod 777 /var/log/linknx.log
+    chmod 777 /var/log/linknx.log
     /etc/init.d/linknx start
   fi
 else
@@ -789,15 +818,15 @@ then
   fi
   if test $knxweb_CVS = true; then
     #echo "KnxWeb2 version presente sur le CVS sourceforge "
-    #sudo wget -O knxweb2.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/knxweb/knxweb2/?view=tar
-    #sudo tar xf knxweb2.tar
-    #sudo rm knxweb2.tar
+    #wget -O knxweb2.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/knxweb/knxweb2/?view=tar
+    #tar xf knxweb2.tar
+    #rm knxweb2.tar
     #versionknxweb=`cat knxweb2/version`
     wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-dev-v2.1.0.tar.gz
-    sudo tar -xzvf knxweb-dev-v2.1.0.tar.gz --overwrite
-    sudo rm knxweb-dev-v2.1.0.tar.gz
-    sudo echo " " > knxweb-dev/dev
-    #sudo chmod -R 777 knxweb-dev/
+    tar -xzvf knxweb-dev-v2.1.0.tar.gz --overwrite
+    rm knxweb-dev-v2.1.0.tar.gz
+    echo " " > knxweb-dev/dev
+    #chmod -R 777 knxweb-dev/
 
     cd knxweb-dev
     versionknxweb=`cat version`
@@ -805,28 +834,28 @@ then
     echo "  Version de KnxWeb : '$versionknxweb'"
   else
     echo "KnxWeb2 version 0.9.2                     "
-    sudo wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-0.9/knxweb-0.9.2.tar.gz
-    sudo tar xzf knxweb-0.9.2.tar.gz >/dev/null
-    sudo rm knxweb-0.9.2.tar.gz
+    wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-0.9/knxweb-0.9.2.tar.gz
+    tar xzf knxweb-0.9.2.tar.gz >/dev/null
+    rm knxweb-0.9.2.tar.gz
     cd knxweb2
   fi
   # TODO faire un lien symbolique vers /tmp/ par exemple suivant le systeme
   # si gere sur carte SD ou Cle USB par exemple pour monter en memoire ce dossier
   cd template
-  sudo mkdir template_c
-  sudo chown www-data:www-data template_c
+  mkdir template_c
+  chown www-data:www-data template_c
 
-  sudo chmod 777 -R /var/www
-  sudo chown www-data:www-data -R /var/www
-#  sudo chown -R www-data:www-data pictures
-#  sudo chown -R www-data:www-data design
-#  sudo chown -R www-data:www-data include
-#  sudo chown -R www-data:www-data widgets
+  chmod 777 -R /var/www
+  chown www-data:www-data -R /var/www
+#  chown -R www-data:www-data pictures
+#  chown -R www-data:www-data design
+#  chown -R www-data:www-data include
+#  chown -R www-data:www-data widgets
 
-  #echo " executer sudo VISUDO et ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
-  sudo echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+  #echo " executer VIet ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
+  echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-  echo "  Acces via http://$IP_machine/knxweb2/ "
+  echo "  Acces via http://$IP_machine/knxweb-dev/ "
 else
   echo "---=== KnxWeb n'est pas a installer ===---"
 fi
@@ -841,11 +870,12 @@ install_webmin ()
   echo "Liste des paquets installé : "
   echo " perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python "
   echo "-------------------------------------------------------------------"
-  sudo apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python --yes -y -qq
+  apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python --yes -y -qq
   #wget http://prdownloads.sourceforge.net/webadmin/webmin_1.780_all.deb
+  #http://prdownloads.sourceforge.net/sourceforge/webadmin/webmin_1.810_all.deb
   wget  http://webmin.com/download/deb/webmin-current.deb
-  #sudo dpkg --install webmin_1.780_all.deb
-  sudo dpkg -i webmin-current.deb
+  #dpkg --install webmin_1.780_all.deb
+  dpkg -i webmin-current.deb
 
 }
 bdd_mysql ()
@@ -972,7 +1002,7 @@ echo "     -----==      soit ~ $tpstrtMin minutes         ==-----"
 echo "     -----==                ;-)                     ==-----"
 echo " "
 echo "             -----==  Acceder a KnxWeb par  ==-----"
-echo "     -----==  http://$ac_hostname/knxweb2/setup.php  ==-----"
+echo "     -----==  http://$ac_hostname/knxweb-dev/setup.php  ==-----"
 echo "                      -----==  OU  ==-----"
-echo "     -----==  http://$IP_machine/knxweb2/setup.php   ==-----"
+echo "     -----==  http://$IP_machine/knxweb-dev/setup.php   ==-----"
 echo "-------------------------------------------------------------------"
