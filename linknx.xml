@@ -1,0 +1,27 @@
+<config>
+  <services>
+    <knxconnection url="ip:127.0.0.1"/>
+    <xmlserver type="inet" port="1028"/>
+    <exceptiondays>
+      <date day="1" month="1"/>
+      <date day="1" month="5"/>
+      <date day="15" month="8"/>
+      <date day="25" month="12"/>
+    </exceptiondays>
+  </services>
+  <objects>
+    <object type="10.001" id="cur_time">Current Time</object>
+    <object type="11.001" id="cur_date" flags="cwtuf">Current Date</object>
+  </objects>
+  <rules>
+    <rule id="cur_time_date">
+      <condition type="timer" trigger="true">
+        <every>1h</every>
+      </condition>
+      <actionlist>
+        <action type="set-value" id="cur_time" value="now"/>
+        <action type="set-value" id="cur_date" value="now"/>
+      </actionlist>
+    </rule>
+  </rules>
+</config>
