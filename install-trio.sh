@@ -8,9 +8,9 @@
 # pour rendre le script executable :
 #     sudo chmod u+x install-trio.sh
 # Syntaxe: # sudo ./install-trio.sh
-# sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion
-# sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion --linknx-cvsversion
-# sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx
+# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion
+# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion --linknx-cvsversion
+# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
 #
 # wget -q http://www.knxweb.fr/install_trio/install-trio.sh
 # sudo chmod 777 install-trio.sh
@@ -124,9 +124,6 @@ do
   -version | --version | --versio | --versi | --vers | -V)
     version_message=true;;
 
-  -raspberry | --raspberry | -raspberrypi | --raspberrypi)
-    raspberry=true;;
-
   -login* | --login*)
     case $ac_optarg in
     *\'*) ac_optarg=`$as_echo "$ac_optarg" | sed "s/'/'\\\\\\\\''/g"` ;;
@@ -201,8 +198,6 @@ Raspbian ( pour Raspberry Pi )
 Usage: $0 [OPTION]...
   -h, --help      aide
   -V, --version   info sur la version du script et des composants installe
-  -raspberry, --raspberry,
-                  Install Sur Raspberry Pi (WebIOPi)
   --with-webmin   Install Webmin par defaut ne le fait pas
 Parametres pour creation du user qui va lancer knxd/linknx + Mysql:
   --login         Login User et Mysql
@@ -223,7 +218,7 @@ Parametres pour KnxWeb :
   --knxweb-cvsversion
                   va prendre la derniere version de KnxWeb sur le cvs
 Exemple :
-sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx
+sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
  --knxweb-cvsversion --linknx-cvsversion --with-webmin
 sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --with-webmin
 DOCUMENTATIONXX
@@ -570,10 +565,6 @@ install_dependances ()
   PAQUAGES=" ";
 }
 
-raspberry ()
-{
-
-}
 install_knxd ()
 {
 echo "-------------------------------------------------------------------"
@@ -944,9 +935,6 @@ case $choix in
     if test "${with_webmin+set}" = set;
     then
       install_webmin
-    fi
-    if test $raspberry = true; then :
-      raspberry
     fi
     bdd_mysql
     ;;
