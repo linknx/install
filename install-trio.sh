@@ -198,26 +198,20 @@ if test "$help_message" = true; then
 −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
 Distributions Linux compatibles avec ce script Debian, Ubuntu,
 Raspbian ( pour Raspberry Pi )
-
 Usage: $0 [OPTION]...
-
   -h, --help      aide
   -V, --version   info sur la version du script et des composants installe
-
   -raspberry, --raspberry,
                   Install Sur Raspberry Pi (WebIOPi)
   --with-webmin   Install Webmin par defaut ne le fait pas
-
 Parametres pour creation du user qui va lancer knxd/linknx + Mysql:
   --login         Login User et Mysql
   --password      Password login User et Mysql
   --groups        Groups du User cree
   --with-mysql    Avec mysql
-
 Parametres pour knxd :
   --knxd-ipport=IP
                   si passerelle Knx de type "IP" ex. 192.168.1.2
-
 Parametres pour LinKnx :
   --linknx-cvsversion
                   va prendre la derniere version de LinKnx sur le cvs
@@ -225,21 +219,16 @@ Parametres pour LinKnx :
                   path utiliser pour le fichier linknx.xml il sera dupliquer
                   dans ce dossier et utiliser au demarrage de linknx
                   par defaut vaut : /var/www/knxweb2
-
 Parametres pour KnxWeb :
   --knxweb-cvsversion
                   va prendre la derniere version de KnxWeb sur le cvs
-
 Exemple :
 sudo sh ./install-trio.sh --raspberry --with-mysql --login=knx --password=knx
  --knxweb-cvsversion --linknx-cvsversion --with-webmin
-
 sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --with-webmin
-
 DOCUMENTATIONXX
   exit
 fi
-
 if test "$version_message" = true; then
   cat << VERSIONXX
 Script d'install de knxd / LinKnx / KnxWeb pour linux Debian
@@ -331,7 +320,7 @@ fi
 if test "x$user_login" != x; then
   echo "Creation de l'utilisateur '$user_login' "
 #  # /usr/sbin/useradd $user_login -p `perl -e "print crypt('$password',pwet)"` -g vhosts -d /home/$user_login -m -s /bin/bash
-  /usr/sbin/useradd ${user_login} -p $(perl -e'print crypt("$password", "linknx")') -G $groups,daemon,root,www-data -d /home/${user_login} -m -s /bin/bash
+  /usr/sbin/useradd ${user_login} -p $(perl -e'print crypt("$password", "linknx")') -G $groups,daemon,dialout,root,www-data -d /home/${user_login} -m -s /bin/bash
 #
   if [ $? -ne 0 ];
   then
@@ -583,34 +572,7 @@ install_dependances ()
 
 raspberry ()
 {
-  #cd /var/www
-  cd "$path_apache";
 
-#  echo "-------------------------------------------------------------------"
-#  echo "Installation de yana-server YANA (You Are Not Alone) http://idleman.fr/yana/ "
-#  wget https://raw.githubusercontent.com/ldleman/yana-server/master/install.sh
-#  chmod +x install.sh
-#  ./install.sh
-#  echo "  Acces via http://$IP_machine/yana-server/ "
-#  echo "-------------------------------------------------------------------"
-
-  echo "-------------------------------------------------------------------"
-  echo "Installation de WebIOPi (http://trouch.com/) "
-  cd $SCRIPT_PATH/
-
-  #wget http://webiopi.googlecode.com/files/WebIOPi-0.6.0.tar.gz
-  wget http://downloads.sourceforge.net/project/webiopi/WebIOPi-0.7.1.tar.gz
-  tar xvzf WebIOPi-0.7.1.tar.gz
-  cd WebIOPi-0.7.1
-  ./setup.sh
-
-  /etc/init.d/webiopi stop
-  update-rc.d webiopi defaults
-  /etc/init.d/webiopi start
-  echo "  Acces via http://$IP_machine:8000/ ou http://raspberrypi:8000/ "
-  echo "    user='webiopi' pass='raspberry' "
-  echo " => http://webiopi.trouch.com/ "
-  echo "-------------------------------------------------------------------"
 }
 install_knxd ()
 {
@@ -631,22 +593,22 @@ if test x$KNXD_PATH = x; then :
 
   echo "Installation de pthsem terminée "
 
+  echo " " > /var/log/knxd.log
+  chmod 777 /var/log/knxd.log
+
   #echo " executer sudo VISUDO et ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
   #wget -O knxd.zip https://github.com/knxd/knxd/archive/master.zip
 
   apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-daemon-dev dh-systemd --yes -y -qq
   git clone https://github.com/knxd/knxd.git
 
-  mv knxd-master knxd
+  #mv knxd-master knxd
   cd knxd
-
+  git checkout stable  # utilisation de la version stable avec pthsem le master ne l'utisant plus et ayant quelques bugs actifs
   dpkg-buildpackage -b -uc
   cd ..
   dpkg -i knxd_*.deb knxd-tools_*.deb
-
-  echo " " > /var/log/knxd.log
-  chmod 777 /var/log/knxd.log
-
+  usermod -a -G dialout knxd
 # nano /etc/knxd.conf
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:192.168.188.XX"
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:$knxd_ipport"
@@ -925,7 +887,6 @@ CREATE TABLE IF NOT EXISTS ${BTICK}$logtable${BTICK} (
   KEY ${BTICK}object${BTICK} (${BTICK}object${BTICK}),
   INDEX ${BTICK}object_ts${BTICK} (${BTICK}object${BTICK},${BTICK}ts${BTICK})
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
-
 CREATE TABLE IF NOT EXISTS ${BTICK}$table${BTICK} (
   ${BTICK}object${BTICK} varchar(256) NOT NULL,
   ${BTICK}value${BTICK} varchar(256) NOT NULL,
