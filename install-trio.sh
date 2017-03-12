@@ -8,8 +8,7 @@
 # pour rendre le script executable :
 #     sudo chmod u+x install-trio.sh
 # Syntaxe: # sudo ./install-trio.sh
-# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion
-# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --groups=adm --knxweb-cvsversion --linknx-cvsversion
+# sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --groups=adm
 # sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
 #
 # wget -q http://www.knxweb.fr/install_trio/install-trio.sh
@@ -18,26 +17,31 @@
 # sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
 # sudo sh ./install-trio.sh --with-mysql --with-webmin
 #
-version="0.16"; #au 23/10/2016
+version="0.17"; # 12/03/2017
+
+if [ "$(id -u)" != "0" ]; then
+   echo "     Attention!!!"
+   echo "     Start script must run as root" 1>&2
+   echo "     Start a root shell with"
+   echo "     sudo su -"
+   exit 1
+fi
+
 SCRIPT_PATH=$PWD
-raspberry=:
 #knxd_ipport="192.168.1.2"
 knxd_ipport=""
-#linknx_CVS=false
-linknx_CVS=true
-#knxweb_CVS=false
-knxweb_CVS=true
 help_message=:
 version_message=:
 user_login="knx"
 password="knx"
 groups="";
-linknx_xml="/var/www/knxweb2";
-path_apache="/var/www/"; # nouvelle version apache /var/www/html/
-path_knxweb="/var/www/knxweb2/"; # nouvelle version apache /var/www/html/knxweb2/
+linknx_xml="/var/www/knxweb";
+dir_knxweb="knxweb"; # nom dossier ou est installé knxweb
+path_knxweb="/var/www/html/$dir_knxweb/"; # nouvelle version apache /var/www/html/...
 PAQUAGES=" ";
 
-service_Systemd=false
+#service_Systemd=false
+service_Systemd=true
 
 #echo "LC_ALL=C" > /etc/default/locale
 
@@ -146,12 +150,6 @@ do
   --knxd-ipport*)
     knxd_ipport=$ac_optarg
     ;;
-  --linknx-cvsversion*)
-    linknx_CVS=true
-    ;;
-  --knxweb-cvsversion*)
-    knxweb_CVS=true
-    ;;
 
   -with-* | --with-*)
     ac_useropt=`expr "x$ac_option" : 'x-*with-\([^=]*\)'`
@@ -195,35 +193,40 @@ if test "$help_message" = true; then
 −−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−−
 Distributions Linux compatibles avec ce script Debian, Ubuntu,
 Raspbian ( pour Raspberry Pi )
+
 Usage: $0 [OPTION]...
+
   -h, --help      aide
   -V, --version   info sur la version du script et des composants installe
+
   --with-webmin   Install Webmin par defaut ne le fait pas
+
 Parametres pour creation du user qui va lancer knxd/linknx + Mysql:
   --login         Login User et Mysql
   --password      Password login User et Mysql
   --groups        Groups du User cree
   --with-mysql    Avec mysql
+
 Parametres pour knxd :
   --knxd-ipport=IP
                   si passerelle Knx de type "IP" ex. 192.168.1.2
+
 Parametres pour LinKnx :
-  --linknx-cvsversion
-                  va prendre la derniere version de LinKnx sur le cvs
-  --linknx_xml=/var/www/knxweb2
+  --linknx_xml=/var/www/knxweb
                   path utiliser pour le fichier linknx.xml il sera dupliquer
                   dans ce dossier et utiliser au demarrage de linknx
                   par defaut vaut : /var/www/knxweb2
+
 Parametres pour KnxWeb :
-  --knxweb-cvsversion
-                  va prendre la derniere version de KnxWeb sur le cvs
+  Aucun
+
 Exemple :
-sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx
- --knxweb-cvsversion --linknx-cvsversion --with-webmin
 sudo sh ./install-trio.sh --with-mysql --login=knx --password=knx --with-webmin
+
 DOCUMENTATIONXX
   exit
 fi
+
 if test "$version_message" = true; then
   cat << VERSIONXX
 Script d'install de knxd / LinKnx / KnxWeb pour linux Debian
@@ -232,9 +235,9 @@ Version de ce script $version
 
 Install de :
  - pthsem  : 2.0.8
- - knxd    : 0.10 à la place de bcusdk / eibd
- - linknx  : 0.0.1.32 ou la version du cvs
- - knxweb  : 0.9.2 ou la version du cvs
+ - knxd    : 0.12
+ - linknx  : 0.0.1.33
+ - knxweb  : 2.1.1
 
  - WebIOPi : Specifique au Rasbperry Pi gestion des GPIO via page Web
             version 0.7.1
@@ -245,6 +248,10 @@ VERSIONXX
   exit
 fi
 
+echo "-------------------------------------------------------------------";
+echo "Script d'install de knxd / LinKnx / KnxWeb pour linux Debian";
+echo "Version de ce script $version";
+date
 echo "-------------------------------------------------------------------";
 echo " ";
 # Name of the host.
@@ -341,16 +348,12 @@ else
   echo "deja installe version $LINKNX_VERSION "
   # ex LINKNX_VERSION = 0.0.1.32 => 0 * 10000 + 0 * 1000 + 1 * 100 + 32 => 132
   version_courrente=$(( $(( $(echo $LINKNX_VERSION | cut -d "." -f1) *10000 )) + $(( $(echo $LINKNX_VERSION | cut -d "." -f2) *1000 )) + $(( $(echo $LINKNX_VERSION | cut -d "." -f3) *100 )) + $(echo $LINKNX_VERSION | cut -d "." -f4) ))
-  if [ "$version_courrente" -ge 132 ]
+  if [ "$version_courrente" -ge 133 ]
   then
     echo "Et est a jour "
     _install_linknx=no
-    if test $linknx_CVS = true; then
-      echo "Mais on force avec la version du cvs "
-      _install_linknx=yes
-    fi
   else
-    echo "Mais n'est pas a jour ( version courante 0.0.1.32 )"
+    echo "Mais n'est pas a jour"
     _install_linknx=yes
   fi
 fi
@@ -383,12 +386,12 @@ echo "-------------------------------------------------------------------"
 
 
 if [ -d "/var/www/html/" ]; then
-  path_knxweb="/var/www/html/knxweb2/";
+  path_knxweb="/var/www/html/$dir_knxweb/";
 fi
 
 # chercher un fichier dans un repertoire pour verifier presence de knxweb
-# find /var/www/knxweb2 | grep setup.php
-if [ -d "$path_knxweb" ]; then
+#if [ -d "$path_knxweb" ]; then
+if [ -f "$path_knxweb/version" ]; then
   KNXWEBSETUP=`find $path_knxweb | grep setup.php`
   KNXWEBversion=`cat "$path_knxweb"version`
 fi
@@ -397,8 +400,8 @@ fi
 echo "-------------------------------------------------------------------"
 echo "----======  KnxWeb  ======----"
 _install_knxweb=yes
-#if ! find /var/www/knxweb2 | grep setup.php > /dev/null 2>&1 ; then
-if [ ! -d "$path_knxweb" ]; then
+#if [ ! -d "$path_knxweb" ]; then
+if [ ! -f "$path_knxweb/version" ]; then
   echo "n'est PAS installe"
   _install_knxweb=yes
 else
@@ -407,16 +410,12 @@ else
   # ex KNXWEBversion = 0.9.2 => 0 * 100 + 9 * 10 + 2 => 92
   version_courrente=$(( $(( $(echo $KNXWEBversion | cut -d "." -f1) *100 )) + $(( $(echo $KNXWEBversion | cut -d "." -f2) *10 )) + $(echo $KNXWEBversion | cut -d "." -f3) ))
 
-  if [ "$version_courrente" -ge 92 ]
+  if [ "$version_courrente" -ge 211 ]
   then
     echo "Et est a jour "
     _install_knxweb=no
-    if test $knxweb_CVS = true; then
-      echo "Mais on force avec la version du cvs "
-      _install_knxweb=yes
-    fi
   else
-    echo "Mais n'est pas a jour ( version courante 0.9.2 )"
+    echo "Mais n'est pas a jour "
     _install_knxweb=yes
   fi
 fi
@@ -490,7 +489,10 @@ install_dependances ()
     echo "-------------------------------------------------------------------"
     apt-get install ${PAQUAGES} --yes -y -qq
     PAQUAGES=" ";
-    echo "Quel mot de passe venez vous de taper (mot de passe root de la MySql) ?"
+    echo " ---===***===---"
+    echo " "
+    echo "Quel mot de passe venez vous de taper (mot de passe root de MySql) ?"
+    echo " :"
     while true
     do
             read MySQL_root < /dev/tty
@@ -564,42 +566,38 @@ install_dependances ()
   apt-get install -f -y -qq --yes
   PAQUAGES=" ";
 }
-
 install_knxd ()
 {
 echo "-------------------------------------------------------------------"
-echo "----======  knxd 0.10  ======----"
+echo "----======  knxd  ======----"
 KNXD_PATH=`which knxd`
 if test x$KNXD_PATH = x; then :
-  echo "Installation de knxd 0.10                    "
-
-  apt-get install cdbs --yes -y -qq
-
-  wget https://www.auto.tuwien.ac.at/~mkoegler/pth/pthsem_2.0.8.tar.gz
-  tar xzf pthsem_2.0.8.tar.gz
-  cd pthsem-2.0.8
-  dpkg-buildpackage -b -uc
-  cd ..
-  dpkg -i libpthsem*.deb
-
-  echo "Installation de pthsem terminée "
+  echo "Installation de knxd                     "
 
   echo " " > /var/log/knxd.log
   chmod 777 /var/log/knxd.log
 
-  #echo " executer sudo VISUDO et ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
-  #wget -O knxd.zip https://github.com/knxd/knxd/archive/master.zip
-
-  apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-daemon-dev dh-systemd --yes -y -qq
+  apt-get install cdbs git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-daemon-dev dh-systemd libev-dev --yes -y -qq
   git clone https://github.com/knxd/knxd.git
 
-  #mv knxd-master knxd
   cd knxd
-  git checkout stable  # utilisation de la version stable avec pthsem le master ne l'utisant plus et ayant quelques bugs actifs
+  git checkout stable #v0.12  # utilisation de la version stable v0.12
   dpkg-buildpackage -b -uc
   cd ..
   dpkg -i knxd_*.deb knxd-tools_*.deb
+
   usermod -a -G dialout knxd
+
+  # … and if you'd like to update knxd:
+  #rm knxd*.deb
+  #cd knxd
+  #git pull
+  #dpkg-buildpackage -b -uc
+  #cd ..
+  #sudo dpkg -i knxd_*.deb knxd-tools_*.deb
+
+
+
 # nano /etc/knxd.conf
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:192.168.188.XX"
 # KNXD_OPTS=="-u /tmp/eib -u /var/run/knx -i -b ipt:$knxd_ipport"
@@ -612,7 +610,7 @@ if test x$KNXD_PATH = x; then :
 
   # KNXD_OPTS="-u /tmp/eib -b ip:"
   # try KNXnet/IP Routing with default Multicast 224.0.23.12
-  echo "\t *** Autodetecting Interface IP/KNX."
+  echo "\t *** Autodetection de l'interface IP/KNX."
   EIBNETTMP=`mktemp`
   eibnetsearch - > $EIBNETTMP
   # Take only first :
@@ -626,14 +624,15 @@ if test x$KNXD_PATH = x; then :
   EIBD_MY_IP=`ifconfig eth0 | grep 'inet addr' | sed -e 's/:/ /' | awk '{print $3}'`
   rm $EIBNETTMP
   if [ "$EIBD_NET_MCAST" != "" -a "$EIBD_NET_HOST" != "$EIBD_MY_IP" ]; then
-    echo "Found KNXnet/IP Router $EIBD_NET_NAME on $EIBD_NET_HOST with $EIBD_NET_MCAST"
-    #echo "KNXD_OPTS=\"-D -T -R -S ipt:$EIBD_NET_HOST\"" >> /etc/knxd.conf
-    #echo "KNXD_OPTS=\"-u /tmp/eib -b ip:$EIBD_NET_HOST\"" >> /etc/knxd.conf
-    echo "KNXD_OPTS=\"-c -D -T -R -S -b ipt:$EIBD_NET_HOST\"" >> /etc/knxd.conf
-  else
-    echo "KNXD_OPTS=\"-c -D -T -R -S -b ipt:$knxd_ipport\"" >> /etc/knxd.conf
+    echo "A trouvé une interface KNXnet/IP Router $EIBD_NET_NAME sur $EIBD_NET_HOST avec $EIBD_NET_MCAST"
+    echo "KNXD_OPTS=\"-e 0.0.1 -E 0.0.2:8 -u /tmp/eib -c -D -T -R -b ipt:$EIBD_NET_HOST\"" >> /etc/knxd.conf
+  #else
+    #echo "KNXD_OPTS=\"-e 0.0.1 -E 0.0.2:8 -t1023 -f9 -u /tmp/eib -c -D -T -R -S -b ipt:$knxd_ipport\"" >> /etc/knxd.conf
+    #echo "KNXD_OPTS=\"-e 0.0.1 -E 0.0.2:8 -u /tmp/eib -c -D -T -R -b ipt:$knxd_ipport\"" >> /etc/knxd.conf
   fi
 
+  # The 'groupswrite' etc. aliases are no longer installed by default. To workaround,
+  # you can either add /usr/lib/knxd to your $PATH, or use knxtool groupswrite.
   #echo "export PATH=\"$PATH:/usr/lib/knxd\"" >> /etc/knxd.conf
 
 else
@@ -648,27 +647,22 @@ install_linknx ()
 echo "-------------------------------------------------------------------"
 if test "$_install_linknx" = yes;
 then
-  if test $linknx_CVS = true;
-  then
-    echo "Installation de linknx version presente sur le CVS sourceforge "
-    wget -O linknx.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/?view=tar
-    tar xf linknx.tar
-    cd linknx
-    # generate configure script (credit : othmar)
-    touch aclocal.m4 Makefile.in config.h.in configure
+  wget https://www.auto.tuwien.ac.at/~mkoegler/pth/pthsem_2.0.8.tar.gz
+  tar xzf pthsem_2.0.8.tar.gz
+  cd pthsem-2.0.8
+  dpkg-buildpackage -b -uc
+  cd ..
+  dpkg -i libpthsem*.deb
 
-    # TODO : https://github.com/linknx/linknx/archive/v0.0.1.33.zip
-    # https://github.com/jef2000/linknx/archive/master.zip
-    #wget https://github.com/linknx/linknx/archive/v0.0.1.33.zip
-    #unzip v0.0.1.33.zip
-    #cd linknx-0.0.1.33/
+  echo "Installation de pthsem terminée "
+  echo " "
 
-  else
-    echo "Installation de linknx_0.0.1.32                   "
-    wget http://downloads.sourceforge.net/project/linknx/linknx/linknx-0.0.1.32/linknx-0.0.1.32.tar.gz
-    tar xzf linknx-0.0.1.32.tar.gz
-    cd linknx-0.0.1.32
-  fi
+  echo "Installation de linknx_0.0.1.33                   "
+  #wget http://downloads.sourceforge.net/project/linknx/linknx/linknx-0.0.1.32/linknx-0.0.1.32.tar.gz
+  wget https://github.com/linknx/linknx/archive/0.0.1.33.tar.gz
+  tar -xzf 0.0.1.33.tar.gz
+  cd linknx-0.0.1.33
+
   if test $_mysql_with = yes;
   then
     ./configure --without-pth-test --enable-smtp --with-log4cpp --with-lua --with-mysql=/usr/bin/mysql_config
@@ -680,14 +674,10 @@ then
   make install
   cd ..
 
-  if [ ! -f $SCRIPT_PATH/linknx.xml ]
-  then
-    wget -O $SCRIPT_PATH/linknx.xml http://linknx.cvs.sourceforge.net/viewvc/linknx/linknx/linknx/conf/linknx.xml
-  fi
   if [ -d "/var/www/html/" ]; then
-    linknx_xml="/var/www/html/knxweb2";
-    if [ ! -d "/var/www/html/knxweb2" ]; then
-      mkdir "/var/www/html/knxweb2";
+    linknx_xml="/var/www/html/knxweb";
+    if [ ! -d "/var/www/html/knxweb" ]; then
+      mkdir "/var/www/html/knxweb";
     fi
   fi
   if [ ! -d "$linknx_xml" ]
@@ -714,7 +704,7 @@ then
     echo "Restart=always" >> /etc/systemd/system/linknx.service
     #Restart=on-failure
     #RestartSec=10
-    #echo "User=linknx" >> /etc/systemd/system/linknx.service
+    #echo "User=knx" >> /etc/systemd/system/linknx.service
     echo "[Install]" >> /etc/systemd/system/linknx.service
     echo "WantedBy=multi-user.target" >> /etc/systemd/system/linknx.service
 
@@ -767,31 +757,32 @@ then
   cd /var/www/
   if [ -d "/var/www/html/" ]; then
     cd html
-    path_knxweb="/var/www/html/knxweb2/";
+    path_knxweb="/var/www/html/$dir_knxweb/";
   fi
-  if test $knxweb_CVS = true; then
-    #echo "KnxWeb2 version presente sur le CVS sourceforge "
-    #wget -O knxweb2.tar http://linknx.cvs.sourceforge.net/viewvc/linknx/knxweb/knxweb2/?view=tar
-    #tar xf knxweb2.tar
-    #rm knxweb2.tar
-    #versionknxweb=`cat knxweb2/version`
-    wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-dev-v2.1.0.tar.gz
-    tar -xzvf knxweb-dev-v2.1.0.tar.gz --overwrite
-    rm knxweb-dev-v2.1.0.tar.gz
-    echo " " > knxweb-dev/dev
-    #chmod -R 777 knxweb-dev/
 
-    cd knxweb-dev
-    versionknxweb=`cat version`
+  # wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-dev-v2.1.0.tar.gz
 
-    echo "  Version de KnxWeb : '$versionknxweb'"
+  wget https://github.com/linknx/knxweb/archive/v2.1.1.tar.gz
+  tar -xzf v2.1.1.tar.gz --overwrite
+
+  rm v2.1.1.tar.gz
+  echo " " > knxweb-2.1.1/dev
+  chmod -R 777 knxweb-2.1.1/
+
+  #mv knxweb-2.1.1/ knxweb/
+  if [ ! -f $path_knxweb/setup.php ]; then
+    cd knxweb-2.1.1/
+    dir_knxweb="knxweb-2.1.1";
   else
-    echo "KnxWeb2 version 0.9.2                     "
-    wget http://downloads.sourceforge.net/project/linknx/knxweb/knxweb-0.9/knxweb-0.9.2.tar.gz
-    tar xzf knxweb-0.9.2.tar.gz >/dev/null
-    rm knxweb-0.9.2.tar.gz
-    cd knxweb2
+    mv knxweb-2.1.1/ knxweb/;
+    cd knxweb
+    dir_knxweb="knxweb";
   fi
+
+  versionknxweb=`cat version`
+
+  echo "  Version de KnxWeb : '$versionknxweb'"
+
   # TODO faire un lien symbolique vers /tmp/ par exemple suivant le systeme
   # si gere sur carte SD ou Cle USB par exemple pour monter en memoire ce dossier
   cd template
@@ -808,7 +799,7 @@ then
   #echo " executer VIet ajouter: www-data ALL=(ALL) NOPASSWD: ALL "
   echo "www-data ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-  echo "  Acces via http://$IP_machine/knxweb-dev/ "
+  echo "  Acces via http://$IP_machine/$dir_knxweb/ "
 else
   echo "---=== KnxWeb n'est pas a installer ===---"
 fi
@@ -824,10 +815,7 @@ install_webmin ()
   echo " perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python "
   echo "-------------------------------------------------------------------"
   apt-get install perl libnet-ssleay-perl openssl libauthen-pam-perl libpam-runtime libio-pty-perl apt-show-versions python --yes -y -qq
-  #wget http://prdownloads.sourceforge.net/webadmin/webmin_1.780_all.deb
-  #http://prdownloads.sourceforge.net/sourceforge/webadmin/webmin_1.810_all.deb
   wget  http://webmin.com/download/deb/webmin-current.deb
-  #dpkg --install webmin_1.780_all.deb
   dpkg -i webmin-current.deb
 
 }
@@ -878,6 +866,7 @@ CREATE TABLE IF NOT EXISTS ${BTICK}$logtable${BTICK} (
   KEY ${BTICK}object${BTICK} (${BTICK}object${BTICK}),
   INDEX ${BTICK}object_ts${BTICK} (${BTICK}object${BTICK},${BTICK}ts${BTICK})
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
 CREATE TABLE IF NOT EXISTS ${BTICK}$table${BTICK} (
   ${BTICK}object${BTICK} varchar(256) NOT NULL,
   ${BTICK}value${BTICK} varchar(256) NOT NULL,
@@ -951,7 +940,8 @@ echo "     -----==      soit ~ $tpstrtMin minutes         ==-----"
 echo "     -----==                ;-)                     ==-----"
 echo " "
 echo "             -----==  Acceder a KnxWeb par  ==-----"
-echo "     -----==  http://$ac_hostname/knxweb-dev/setup.php  ==-----"
+echo "     -----==  http://$ac_hostname/$dir_knxweb/setup.php  ==-----"
 echo "                      -----==  OU  ==-----"
-echo "     -----==  http://$IP_machine/knxweb-dev/setup.php   ==-----"
+echo "     -----==  http://$IP_machine/$dir_knxweb/setup.php   ==-----"
 echo "-------------------------------------------------------------------"
+exit 0
