@@ -482,7 +482,8 @@ install_dependances ()
   apt-get install ${PAQUAGES} --yes -y -qq
   PAQUAGES=" ";
   if test $_mysql_with = yes; then
-    PAQUAGES=${PAQUAGES}" mysql-client mysql-common mysql-server mysql-server-core-5.5 libmysqlclient-dev"
+    #PAQUAGES=${PAQUAGES}" mysql-client mysql-common mysql-server mysql-server-core-5.5 libmysqlclient-dev"
+    PAQUAGES=${PAQUAGES}" mysql-client mysql-common mysql-server"
     echo "-------------------------------------------------------------------"
     echo "Liste des paquets installés 3/6 : "
     echo ${PAQUAGES}
