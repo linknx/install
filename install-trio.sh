@@ -578,7 +578,7 @@ if test x$KNXD_PATH = x; then :
   echo " " > /var/log/knxd.log
   chmod 777 /var/log/knxd.log
 
-  apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-dev dh-systemd libev-dev --yes -y -qq
+  apt-get install git-core build-essential debhelper cdbs autoconf automake libtool libusb-1.0-0-dev libsystemd-dev dh-systemd libev-dev libfmt3-dev --yes -y -qq
   git clone https://github.com/knxd/knxd.git
 
   cd knxd
