@@ -530,7 +530,8 @@ install_dependances ()
   if test "$_install_apache2" = yes;
   then
     echo "Installation du serveur apache2 + Php7.0                  "
-    PAQUAGES=${PAQUAGES}" apache2 php7.0 libapache2-mod-php7.0 php7.0-common php7.0-cgi php7.0-fpm php7.0-cli php7.0-curl php7.0-gd php7.0-idn php-pear php7.0-imagick php7.0-imap php7.0-mcrypt php7.0-memcache php7.0-mhash php7.0-ming php7.0-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
+    #PAQUAGES=${PAQUAGES}" apache2 php7.0 libapache2-mod-php7.0 php7.0-common php7.0-cgi php7.0-fpm php7.0-cli php7.0-curl php7.0-gd php7.0-idn php-pear php7.0-imagick php7.0-imap php7.0-mcrypt php7.0-memcache php7.0-mhash php7.0-ming php7.0-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
+    PAQUAGES=${PAQUAGES}" apache2 php7.0 libapache2-mod-php7.0 php7.0-common php7.0-cgi php7.0-fpm php7.0-cli php7.0-curl php7.0-gd php-pear php-imagick php7.0-imap php7.0-mcrypt php-memcache php-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
     if test $_mysql_with = yes; then
       PAQUAGES=${PAQUAGES}" php7.0-mysql"
     fi
@@ -546,7 +547,8 @@ install_dependances ()
     echo " Apache2 deja installé "
     PHP_PATH=`which php`
     if test x$PHP_PATH = x; then :
-      PAQUAGES=${PAQUAGES}" php7.0 php7.0-common php7.0-cgi php7.0-cli php7.0-curl php7.0-gd php7.0-idn php-pear php7.0-imagick php7.0-imap php7.0-mcrypt php7.0-memcache php7.0-mhash php7.0-ming php7.0-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
+     #PAQUAGES=${PAQUAGES}" php7.0 php7.0-common php7.0-cgi php7.0-cli php7.0-curl php7.0-gd php7.0-idn php-pear php7.0-imagick php7.0-imap php7.0-mcrypt php7.0-memcache php7.0-mhash php7.0-ming php7.0-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
+      PAQUAGES=${PAQUAGES}" php7.0 php7.0-common php7.0-cgi php7.0-fpm php7.0-cli php7.0-curl php7.0-gd php-pear php-imagick php7.0-imap php7.0-mcrypt php-memcache php-ps php7.0-pspell php7.0-recode php7.0-snmp php7.0-tidy php7.0-xmlrpc php7.0-xsl php7.0-json"
     else
       echo "-------------------------------------------------------------------"
       echo "  PHP7.0 est installé "
