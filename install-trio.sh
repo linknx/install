@@ -236,7 +236,7 @@ Version de ce script $version
 Install de :
  - pthsem  : 2.0.8
  - knxd    : 0.12
- - linknx  : 0.0.1.33
+ - linknx  : 0.0.1.34
  - knxweb  : 2.1.1
 
  - WebIOPi : Specifique au Rasbperry Pi gestion des GPIO via page Web
@@ -658,11 +658,11 @@ then
   echo "Installation de pthsem terminée "
   echo " "
 
-  echo "Installation de linknx_0.0.1.33                   "
+  echo "Installation de linknx_0.0.1.34                   "
   #wget http://downloads.sourceforge.net/project/linknx/linknx/linknx-0.0.1.32/linknx-0.0.1.32.tar.gz
-  wget https://github.com/linknx/linknx/archive/0.0.1.33.tar.gz
-  tar -xzf 0.0.1.33.tar.gz
-  cd linknx-0.0.1.33
+  wget https://github.com/linknx/linknx/archive/0.0.1.34.tar.gz
+  tar -xzf 0.0.1.34.tar.gz
+  cd linknx-0.0.1.34
 
   if test $_mysql_with = yes;
   then
