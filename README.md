@@ -1,4 +1,7 @@
-# install
+# Disclaimer
+This script is for informational purpose only. It can be used as an example to guide a new user through the installation steps but its logic is not ideal and can easily lead to a corrupt setup. Therefore, a manual installation after understanding the overall architecture is highly recommended.
+
+# Install
 Script install LinKnx &amp; KnxWeb
 
 Installation de KnxD / LinKnx / KnxWeb
